@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Zap } from "lucide-react";
 
 export default function Home() {
   return (
@@ -15,15 +14,10 @@ export default function Home() {
         className="w-full bg-[#030d18] border-b border-slate-800/60 px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl z-20"
       >
         <div className="flex flex-col items-center sm:items-start">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#22d3ee] to-[#a855f7] flex items-center justify-center shadow-lg shadow-cyan-500/20">
-              <Zap className="w-6 h-6 text-white fill-white" />
-            </div>
-            <span className="text-3xl font-extrabold tracking-tight text-[#f1f5f9] font-mono">
-              GigForge
-            </span>
-          </div>
-          <span className="text-[#22d3ee] text-xs font-mono font-medium tracking-wide mt-1.5 sm:pl-14">
+          <span className="text-3xl sm:text-4xl font-black tracking-tight text-[#f1f5f9] font-sans">
+            GigForge
+          </span>
+          <span className="text-[#22d3ee] text-xs font-mono font-medium tracking-wide mt-1">
             Your AI Co-Founder for Freelancing
           </span>
         </div>
@@ -108,9 +102,9 @@ export default function Home() {
             {/* 2x2 FEATURE GRID WITH TOUCHING BORDERS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 rounded-2xl overflow-hidden border border-slate-700/60 shadow-2xl">
               
-              {/* Top-Left: Smart Profile Optimization */}
-              <div className="bg-[#112a1f] p-6 sm:p-7 flex flex-col justify-start border-b sm:border-r border-slate-700/50 min-h-[190px] transition-colors hover:bg-[#153426]">
-                <h3 className="font-mono font-bold italic text-sm sm:text-base text-[#6ee7b7] tracking-wide mb-3 uppercase leading-snug">
+              {/* Top-Left: Smart Profile Optimization (Dark Forest Green) */}
+              <div className="bg-[#102a1e] p-6 sm:p-7 flex flex-col justify-start border-b sm:border-r border-slate-700/50 min-h-[190px] transition-colors hover:bg-[#153426]">
+                <h3 className="font-mono font-bold italic text-sm sm:text-base text-[#4ade80] tracking-wide mb-3 uppercase leading-snug">
                   SMART PROFILE OPTIMIZATION
                 </h3>
                 <p className="text-slate-200 italic font-mono text-xs sm:text-sm leading-relaxed">
@@ -118,8 +112,8 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Top-Right: AI-Written Proposals */}
-              <div className="bg-[#1d1738] p-6 sm:p-7 flex flex-col justify-start border-b border-slate-700/50 min-h-[190px] transition-colors hover:bg-[#231c44]">
+              {/* Top-Right: AI-Written Proposals (Dark Indigo/Violet) */}
+              <div className="bg-[#1c1438] p-6 sm:p-7 flex flex-col justify-start border-b border-slate-700/50 min-h-[190px] transition-colors hover:bg-[#231947]">
                 <h3 className="font-mono font-bold italic text-sm sm:text-base text-[#c084fc] tracking-wide mb-3 uppercase leading-snug">
                   AI-WRITTEN PROPOSALS
                 </h3>
@@ -128,8 +122,8 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Bottom-Left: Contracts & Invoicing */}
-              <div className="bg-[#371224] p-6 sm:p-7 flex flex-col justify-start border-b sm:border-b-0 sm:border-r border-slate-700/50 min-h-[190px] transition-colors hover:bg-[#42162b]">
+              {/* Bottom-Left: Contracts & Invoicing (Dark Maroon/Wine) */}
+              <div className="bg-[#38161e] p-6 sm:p-7 flex flex-col justify-start border-b sm:border-b-0 sm:border-r border-slate-700/50 min-h-[190px] transition-colors hover:bg-[#461b25]">
                 <h3 className="font-mono font-bold italic text-sm sm:text-base text-[#f472b6] tracking-wide mb-3 uppercase leading-snug">
                   CONTRACTS AND INVOICING
                 </h3>
@@ -138,8 +132,8 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Bottom-Right: Lead Finding & Qualification */}
-              <div className="bg-[#441126] p-6 sm:p-7 flex flex-col justify-start min-h-[190px] transition-colors hover:bg-[#50142d]">
+              {/* Bottom-Right: Lead Finding & Qualification (Deep Crimson/Magenta) */}
+              <div className="bg-[#540d2b] p-6 sm:p-7 flex flex-col justify-start min-h-[190px] transition-colors hover:bg-[#661034]">
                 <h3 className="font-mono font-bold italic text-sm sm:text-base text-[#f472b6] tracking-wide mb-3 uppercase leading-snug">
                   LEAD FINDING AND QUALIFICATION
                 </h3>
