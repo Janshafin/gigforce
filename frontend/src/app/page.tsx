@@ -14,7 +14,10 @@ export default function Home() {
         className="w-full bg-[#030d18] border-b border-slate-800/60 px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl z-20"
       >
         <div className="flex flex-col items-center sm:items-start">
-          <span className="text-3xl sm:text-4xl font-black tracking-tight text-[#f1f5f9] font-sans">
+          <span 
+            className="text-3xl sm:text-4xl font-semibold tracking-tight text-[#f1f5f9] font-clash"
+            style={{ fontFamily: "'Clash Display', sans-serif" }}
+          >
             GigForge
           </span>
           <span className="text-[#22d3ee] text-xs font-mono font-medium tracking-wide mt-1">

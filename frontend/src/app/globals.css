@@ -1,4 +1,10 @@
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@500,600&display=swap');
 @import "tailwindcss";
+
+.font-clash {
+  font-family: 'Clash Display', sans-serif;
+}
+
 
 :root {
   --background: #051424;
