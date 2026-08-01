@@ -6,8 +6,8 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", 
-        "postgresql+asyncpg://gigforge_user:gigforge_password@localhost:5432/gigforge_db"
+    "DATABASE_URL",
+    "sqlite+aiosqlite:///./gigforge.db"
     )
     SECRET_KEY: str = os.getenv("SECRET_KEY", "gigforge-super-secret-key-change-in-production-2026")
     ALGORITHM: str = "HS256"
@@ -23,4 +23,8 @@ class Settings(BaseSettings):
         env_file = ".env"
         extra = "allow"
 
+print("ENV DATABASE_URL =", os.getenv("DATABASE_URL"))
+
 settings = Settings()
+
+print("SETTINGS DATABASE_URL =", settings.DATABASE_URL)

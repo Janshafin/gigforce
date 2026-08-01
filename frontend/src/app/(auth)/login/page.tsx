@@ -2,13 +2,35 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Zap, Mail, ArrowRight, Sparkles, CheckCircle2, ShieldCheck } from "lucide-react";
-import { loginDemo, requestMagicLink, loginGoogleSimulated } from "@/lib/api";
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
+import { auth } from "@/lib/firebase";
+
+import {
+  loginGoogle,
+  loginDemo,
+  requestMagicLink,
+} from "@/lib/api";
+
+import {
+  Zap,
+  Mail,
+  ArrowRight,
+  Sparkles,
+  CheckCircle2,
+  ShieldCheck,
+} from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
+const [isSignup, setIsSignup] = useState(false);
   const [magicSent, setMagicSent] = useState(false);
   const [error, setError] = useState("");
 
@@ -26,17 +48,74 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+ const handleEmailAuth = async () => {
+  setLoading(true);
+  setError("");
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    try {
-      await loginGoogleSimulated(email || "alex.vance@gigforge.ai", "Alex Vance");
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Google sign in failed");
-      setLoading(false);
+  try {
+    let result;
+
+    if (isSignup) {
+      result = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+    } else {
+      result = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
     }
-  };
+
+    const user = result.user;
+
+    const idToken = await user.getIdToken();
+
+    await loginGoogle(
+      idToken,
+      user.email || "",
+      user.displayName || "GigForge User"
+    );
+
+    router.push("/dashboard");
+
+  } catch (err: any) {
+    setError(err.message || "Email authentication failed");
+  } finally {
+    setLoading(false);
+  }
+};
+  const handleGoogleSignIn = async () => {
+   
+  setLoading(true);
+  setError("");
+
+  try {
+    const provider = new GoogleAuthProvider();
+
+    const result = await signInWithPopup(auth, provider);
+
+    const user = result.user;
+
+    const idToken = await user.getIdToken();
+
+    await loginGoogle(
+      idToken,
+      user.email || "",
+      user.displayName || "GigForge User"
+    );
+
+    router.push("/dashboard");
+  } catch (err: any) {
+    console.error(err);
+    setError(err.message || "Google sign in failed");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleDemoSignIn = async () => {
     setLoading(true);
@@ -62,7 +141,7 @@ export default function LoginPage() {
             <Zap className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-            Welcome to <span className="gradient-text">GigForge</span>
+Welcome to <span className="gradient-text">GigForge TEST</span>
           </h1>
           <p className="text-sm text-slate-400">
             Your Freelance AI Co-Founder for Proposals, Leads & Growth
@@ -123,7 +202,7 @@ export default function LoginPage() {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleMagicLink} className="space-y-4">
+          <form className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                 Work Email
@@ -140,7 +219,38 @@ export default function LoginPage() {
                 />
               </div>
             </div>
+<div>
+  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+    Password
+  </label>
 
+  <input
+    type="password"
+    value={password}
+    onChange={(e)=>setPassword(e.target.value)}
+    placeholder="Enter password"
+    required
+    className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-4 py-3 text-sm text-white"
+  />
+</div>
+
+<button
+  type="button"
+  onClick={handleEmailAuth}
+  className="w-full gradient-button text-white font-semibold py-3 rounded-xl text-sm"
+>
+  {isSignup ? "Create Account" : "Login"}
+</button>
+
+<button
+  type="button"
+  onClick={()=>setIsSignup(!isSignup)}
+  className="w-full text-xs text-cyan-400 mt-3"
+>
+  {isSignup
+    ? "Already have an account? Login"
+    : "New user? Create account"}
+</button>
             <button
               type="submit"
               disabled={loading}
