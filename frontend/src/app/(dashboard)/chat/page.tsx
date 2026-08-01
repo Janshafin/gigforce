@@ -46,6 +46,8 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -229,8 +231,18 @@ export default function ChatPage() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Input Section */}
-      <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="glass-card rounded-2xl p-2.5 border border-white/10 flex gap-3 shadow-xl">
+            {/* Input Section */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+
+          if (!input.trim()) return;
+
+          setPendingMessage(input);
+          setReviewOpen(true);
+        }}
+        className="flex items-center gap-3 glass-card rounded-2xl p-3 border border-white/10"
+      >
         <input
           type="text"
           value={input}
@@ -238,15 +250,54 @@ export default function ChatPage() {
           placeholder="Ask your AI Co-Founder to write a proposal, analyze a lead, or calculate rates..."
           className="flex-1 bg-transparent text-sm text-white placeholder-slate-500 px-4 py-2.5 focus:outline-none"
         />
+
         <button
           type="submit"
-          disabled={sending || !input.trim()}
+          disabled={!input.trim() || sending}
           className="gradient-button text-white px-6 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2 shadow-lg shadow-cyan-500/20 disabled:opacity-50"
         >
-          <span>Send</span>
+          <span>Review</span>
           <Send className="w-4 h-4" />
         </button>
       </form>
+
+      {/* Review Popup */}
+      {reviewOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="w-full max-w-lg rounded-2xl bg-slate-900 border border-white/10 p-6 shadow-2xl">
+            <h2 className="text-lg font-bold text-white mb-4">
+              Review Before Sending
+            </h2>
+
+            <div className="rounded-xl bg-slate-800 p-4 text-sm text-slate-200 whitespace-pre-wrap">
+              {pendingMessage}
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setReviewOpen(false);
+                  setPendingMessage("");
+                }}
+                className="px-4 py-2 rounded-lg bg-slate-700 text-white"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => {
+                  setReviewOpen(false);
+                  handleSend(pendingMessage);
+                  setPendingMessage("");
+                }}
+                className="px-4 py-2 rounded-lg bg-cyan-600 text-white"
+              >
+               Send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
