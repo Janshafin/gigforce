@@ -5,13 +5,10 @@ import {
   Bot, 
   Send, 
   Sparkles, 
-  Zap, 
   FileText, 
   DollarSign, 
-  HelpCircle, 
   Copy, 
-  Check, 
-  ChevronRight,
+  Check,
   Lightbulb
 } from "lucide-react";
 import { getChatHistory, sendChatMessage, ChatMessage } from "@/lib/api";
@@ -36,7 +33,7 @@ const promptTemplates = [
   {
     title: "Generate Follow-Up Email",
     prompt: "Draft a high-impact follow-up email for a proposal sent 3 days ago that hasn't received a response.",
-    icon: Zap
+   icon: Send
   }
 ];
 
@@ -112,7 +109,7 @@ export default function ChatPage() {
           <div>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
               AI Co-Founder Workspace
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono border border-cyan-500/30">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                 Gemini 1.5 Flash
               </span>
             </h1>
@@ -141,7 +138,7 @@ export default function ChatPage() {
               <div className="flex items-center justify-between mb-2">
                 <Icon className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
                 {t.badge && (
-                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
                     {t.badge}
                   </span>
                 )}
@@ -206,10 +203,10 @@ export default function ChatPage() {
                   <div className="mt-4 p-3 rounded-xl bg-slate-950/80 border border-cyan-500/30 text-xs">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-semibold text-cyan-300">Generated Action Artifact</span>
-                      <span className="text-[10px] text-slate-400 font-mono">Proposal Draft</span>
+                      <span className="text-[10px] text-slate-400 ">Proposal Draft</span>
                     </div>
                     <p className="text-white font-medium">{msg.action_meta.title}</p>
-                    <p className="text-cyan-400 font-mono text-[11px] mt-1">
+                    <p className="text-cyan-400  text-[11px] mt-1">
                       Budget: ${msg.action_meta.pricing?.toLocaleString()}
                     </p>
                   </div>

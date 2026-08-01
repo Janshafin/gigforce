@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   MessageSquareCode, 
@@ -21,16 +21,30 @@ const navItems = [
 ];
 
 export function Sidebar() {
-  const pathname = usePathname();
+ const pathname = usePathname();
+const router = useRouter();
+
+const handleLogout = () => {
+  const confirmLogout = window.confirm(
+    "Are you sure you want to logout?"
+  );
+
+  if (!confirmLogout) return;
+
+  localStorage.removeItem("gigforge_token");
+  localStorage.removeItem("gigforge_user");
+
+  router.push("/login");
+};
 
   return (
     <aside className="w-72 h-screen glass-panel fixed left-0 top-0 z-40 flex flex-col justify-between p-5 border-r border-white/10 text-slate-200">
       <div>
         {/* Brand Header */}
         <div className="flex items-center gap-3 px-2 py-3 mb-6">
-          <div className="w-10 h-10 rounded-xl gradient-button flex items-center justify-center shadow-lg shadow-cyan-500/20">
-            <Zap className="w-6 h-6 text-white" />
-          </div>
+          <div className="text-cyan-400">
+  <Zap className="w-6 h-6" />
+</div>
           <div>
             <h1 className="font-bold text-xl tracking-tight text-white flex items-center gap-1.5">
               GigForge <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono border border-cyan-500/30">AI</span>
@@ -100,7 +114,12 @@ export function Sidebar() {
               <p className="text-[11px] text-slate-400">Pro Freelancer</p>
             </div>
           </div>
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+         <button
+  onClick={handleLogout}
+  className="text-xs text-red-400 hover:text-red-300"
+>
+  Logout
+</button>
         </div>
       </div>
     </aside>

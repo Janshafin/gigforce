@@ -79,17 +79,32 @@ export async function requestMagicLink(email: string) {
   return await res.json();
 }
 
-export async function loginGoogleSimulated(email: string, full_name: string) {
+export async function loginGoogle(
+  id_token: string,
+  email: string,
+  full_name: string
+) {
   const res = await fetch(`${API_BASE}/api/auth/google`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id_token: "google-simulated-token", email, full_name }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      id_token,
+      email,
+      full_name,
+    }),
   });
+
+  if (!res.ok) throw new Error("Google login failed");
+
   const data = await res.json();
+
   if (typeof window !== "undefined") {
     localStorage.setItem("gigforge_token", data.access_token);
     localStorage.setItem("gigforge_user", JSON.stringify(data.user));
   }
+
   return data;
 }
 
