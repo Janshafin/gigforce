@@ -1,6 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
+.font-clash {
+  font-family: 'Clash Display', sans-serif;
+}
+
+
 :root {
   --background: #051424;
   --foreground: #f1f5f9;
