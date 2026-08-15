@@ -34,10 +34,14 @@ def draft_email_with_llm(prompt: str, recipient_name: str, context: str = "") ->
     model = genai.GenerativeModel('gemini-3.5-flash')
     
     system_instruction = f"""
-    You are an expert executive assistant and email copywriter. 
-    Write a highly professional, concise, and engaging email. 
-    The recipient's name is {recipient_name}.
-    Additional Context: {context}
+    You are an email writing assistant. Your ONLY job is to write exactly what the user asks you to write.
+    
+    RULES:
+    - The recipient's name is "{recipient_name}". You MUST address them by this name (e.g., "Hi {recipient_name},").
+    - Follow the user's instructions EXACTLY. If they say "tell them it's a test mail", just write a short friendly email saying it's a test mail. Do NOT add extra content they didn't ask for.
+    - Keep it natural and human. Don't over-embellish or add unnecessary formality unless the user asks for it.
+    - Sign off as "GigForge Team" unless told otherwise.
+    {f'Additional Context: {context}' if context else ''}
     
     You must output EXACTLY in this format:
     SUBJECT: [Your generated subject line]
@@ -47,7 +51,7 @@ def draft_email_with_llm(prompt: str, recipient_name: str, context: str = "") ->
     
     print(f"[*] Drafting email using Gemini LLM for {recipient_name}...")
     try:
-        response = model.generate_content(f"{system_instruction}\n\nTask: {prompt}")
+        response = model.generate_content(f"{system_instruction}\n\nUser's instruction: {prompt}")
         text = response.text.strip()
         
         # Parse the output
@@ -96,26 +100,41 @@ def send_email(to_email: str, subject: str, body: str, dry_run: bool = True):
         server.login(SMTP_USERNAME, SMTP_PASSWORD)
         server.send_message(msg)
         server.quit()
-        print(f"[SUCCESS] Email sent to {to_email}!")
+        print(f"\n[SUCCESS] Email sent to {to_email}!")
     except Exception as e:
         print(f"[ERROR] Failed to send email: {e}")
 
 if __name__ == "__main__":
     print("--- GigForge Autonomous Email Agent ---")
     
-    print("Please provide the email details:")
-    target_email = input("Target Email Address: ").strip()
-    target_name = input("Target First Name: ").strip()
-    user_prompt = input("What should the email say? (e.g., 'Pitch our web design services'): ").strip()
+    print("\nPlease provide the email details:")
+    target_email = input("  📧 Recipient Email: ").strip()
+    target_name = input("  👤 Recipient Name: ").strip()
+    user_prompt = input("  ✏️  What should the email say?: ").strip()
     
     # 1. Draft the email using LLM
     draft = draft_email_with_llm(user_prompt, target_name)
     
     if draft:
-        # 2. Send the email (Dry run by default to prevent accidents)
-        send_email(
-            to_email=target_email,
-            subject=draft['subject'],
-            body=draft['body'],
-            dry_run=False # Actually send the email!
-        )
+        # 2. Show preview first
+        print("\n" + "="*50)
+        print("📋 EMAIL PREVIEW")
+        print("="*50)
+        print(f"TO: {target_email}")
+        print(f"SUBJECT: {draft['subject']}")
+        print("-" * 50)
+        print(draft['body'])
+        print("="*50)
+        
+        # 3. Ask for confirmation
+        confirm = input("\n🚀 Send this email? (yes/no): ").strip().lower()
+        
+        if confirm in ['yes', 'y']:
+            send_email(
+                to_email=target_email,
+                subject=draft['subject'],
+                body=draft['body'],
+                dry_run=False
+            )
+        else:
+            print("[CANCELLED] Email was NOT sent.")
