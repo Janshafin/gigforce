@@ -31,7 +31,7 @@ def draft_email_with_llm(prompt: str, recipient_name: str, context: str = "") ->
             "body": f"Hi {recipient_name},\n\nI wanted to reach out regarding: {prompt}.\n\nLet's connect soon!\n\nBest regards,\nGigForge Agent"
         }
         
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-3.5-flash')
     
     system_instruction = f"""
     You are an expert executive assistant and email copywriter. 
@@ -117,5 +117,5 @@ if __name__ == "__main__":
             to_email=target_email,
             subject=draft['subject'],
             body=draft['body'],
-            dry_run=True # Change to False to actually send
+            dry_run=True # Test AI generation safely
         )
