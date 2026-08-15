@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import {
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { loginDemo, loginGoogle } from "@/lib/api";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,17 +29,13 @@ export default function LoginPage() {
       await loginGoogle("dummy-token-123", email, "GigForge User");
       router.push("/dashboard");
     } catch (err: any) {
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setError("Invalid email or password. Please try again.");
-      } else {
-        setError("Sign in failed. Please check your connection and try again.");
-      }
+      setError("Account creation failed. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignUp = async () => {
     setLoading(true);
     setError("");
 
@@ -48,13 +44,7 @@ export default function LoginPage() {
       await loginDemo();
       router.push("/dashboard");
     } catch (err: any) {
-      if (err.code === 'auth/popup-blocked') {
-        setError("Google sign-in couldn't open. Please allow pop-ups and try again.");
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        setError("Sign-in was cancelled. Please try again.");
-      } else {
-        setError("Google sign-in failed. Please try again.");
-      }
+      setError("Google sign-up failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -70,12 +60,12 @@ export default function LoginPage() {
         className="w-full md:w-1/2 p-8 md:p-16 lg:p-24 flex flex-col justify-center border-b md:border-b-0 md:border-r border-[var(--border-default)]"
       >
         <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl leading-tight text-[var(--text-primary)] mb-6">
-          Your work<br />
-          deserves<br />
-          more time.
+          Focus on<br />
+          what you<br />
+          do best.
         </h1>
         <p className="font-sans text-lg text-[var(--text-secondary)] max-w-md">
-          Sign in and let your AI Co-Founder take care of the repetitive work.
+          Create an account and let your AI Co-Founder handle the rest.
         </p>
       </motion.div>
 
@@ -88,7 +78,7 @@ export default function LoginPage() {
       >
         <div className="max-w-md w-full mx-auto">
           <h2 className="font-sans text-2xl font-medium text-[var(--text-primary)] mb-8">
-            Welcome back.
+            Start scaling today.
           </h2>
 
           {error && (
@@ -98,7 +88,7 @@ export default function LoginPage() {
           )}
 
           <button
-            onClick={handleGoogleSignIn}
+            onClick={handleGoogleSignUp}
             disabled={loading}
             className="w-full py-3 px-4 border border-[var(--border-default)] hover:border-[var(--text-secondary)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-sm font-medium flex items-center justify-center gap-3 transition-colors mb-8 disabled:opacity-50"
           >
@@ -113,7 +103,7 @@ export default function LoginPage() {
 
           <div className="flex items-center my-6">
             <div className="flex-1 border-t border-[var(--border-default)]"></div>
-            <span className="px-4 text-xs font-mono text-[var(--text-secondary)] uppercase tracking-widest">or continue with email</span>
+            <span className="px-4 text-xs font-mono text-[var(--text-secondary)] uppercase tracking-widest">or sign up with email</span>
             <div className="flex-1 border-t border-[var(--border-default)]"></div>
           </div>
 
@@ -149,18 +139,15 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full bg-[var(--accent-primary)] hover:bg-[#c25e34] text-[var(--bg-primary)] font-medium py-3 text-base transition-colors disabled:opacity-70 mt-4"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Creating account..." : "Sign Up"}
             </button>
           </form>
 
           <div className="mt-8 flex flex-col items-center gap-4 text-sm font-sans">
-            <button className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
-              Forgot password?
-            </button>
             <div className="text-[var(--text-secondary)]">
-              New to GigForge?{" "}
-              <Link href="/signup" className="text-[var(--accent-primary)] hover:underline">
-                Create an account
+              Already have an account?{" "}
+              <Link href="/login" className="text-[var(--accent-primary)] hover:underline">
+                Sign in
               </Link>
             </div>
           </div>
