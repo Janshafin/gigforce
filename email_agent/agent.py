@@ -103,10 +103,10 @@ def send_email(to_email: str, subject: str, body: str, dry_run: bool = True):
 if __name__ == "__main__":
     print("--- GigForge Autonomous Email Agent ---")
     
-    # Example Usage
-    target_email = "test@example.com"
-    target_name = "Alex"
-    user_prompt = "Pitch our new Next.js UI redesign services. Mention we noticed their current dashboard is slow."
+    print("Please provide the email details:")
+    target_email = input("Target Email Address: ").strip()
+    target_name = input("Target First Name: ").strip()
+    user_prompt = input("What should the email say? (e.g., 'Pitch our web design services'): ").strip()
     
     # 1. Draft the email using LLM
     draft = draft_email_with_llm(user_prompt, target_name)
@@ -117,5 +117,5 @@ if __name__ == "__main__":
             to_email=target_email,
             subject=draft['subject'],
             body=draft['body'],
-            dry_run=True # Test AI generation safely
+            dry_run=False # Actually send the email!
         )
