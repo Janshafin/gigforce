@@ -1,9 +1,40 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRight, Bot, Target, FileText, TrendingUp, CheckCircle2 } from "lucide-react";
-
+import { useState } from "react";
+import { Target, FileText, TrendingUp, CheckCircle2 } from "lucide-react";
 export default function DashboardPortalPage() {
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const handleCheckout = async (plan: "pro" | "elite") => {
+    try {
+      setLoadingPlan(plan);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/payments/create-checkout-session`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ plan }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Failed to create checkout session");
+      }
+
+      window.location.href = data.checkout_url;
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Unable to start checkout. Please try again.");
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-12 pb-16">
       
@@ -124,9 +155,13 @@ export default function DashboardPortalPage() {
               ))}
             </ul>
             
-            <button className="w-full py-3 bg-[var(--accent-primary)] hover:bg-[#c25e34] text-[var(--bg-primary)] font-medium transition-colors">
-              Upgrade to Pro
-            </button>
+           <button
+  onClick={() => handleCheckout("pro")}
+  disabled={loadingPlan === "pro"}
+  className="w-full py-3 bg-[var(--accent-primary)] hover:bg-[#c25e34] text-[var(--bg-primary)] font-medium transition-colors disabled:opacity-50"
+>
+  {loadingPlan === "pro" ? "Loading..." : "Upgrade to Pro"}
+</button>
           </div>
 
           {/* Elite Plan */}
@@ -147,9 +182,13 @@ export default function DashboardPortalPage() {
               ))}
             </ul>
             
-            <button className="w-full py-3 border border-[var(--border-default)] text-[var(--text-primary)] font-mono text-xs uppercase tracking-widest hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] transition-colors">
-              Contact Sales
-            </button>
+            <button
+  onClick={() => handleCheckout("elite")}
+  disabled={loadingPlan === "elite"}
+  className="w-full py-3 border border-[var(--border-default)] text-[var(--text-primary)] font-mono text-xs uppercase tracking-widest hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)] transition-colors disabled:opacity-50"
+>
+  {loadingPlan === "elite" ? "Loading..." : "Upgrade to Elite"}
+</button>
           </div>
         </div>
       </section>
