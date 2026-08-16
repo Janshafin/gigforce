@@ -43,5 +43,5 @@ async def health_check():
         "status": "online",
         "app": "GigForge Backend",
         "environment": settings.ENVIRONMENT,
-        "model": "Gemini 1.5 (Google AI Studio API)"
+        "model": "Gemini 3.5 Flash (Google AI Studio API)"
     }

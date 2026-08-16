@@ -11,7 +11,7 @@ export default function DashboardLayout({
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Header />
-        <main className="p-8 ml-72 min-h-[calc(100vh-4rem)]">
+        <main className="p-4 sm:p-8 md:ml-72 min-h-[calc(100vh-4rem)]">
           {children}
         </main>
       </div>

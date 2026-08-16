@@ -30,8 +30,4 @@ SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
         env_file = ".env"
         extra = "allow"
 
-print("ENV DATABASE_URL =", os.getenv("DATABASE_URL"))
-
 settings = Settings()
-
-print("SETTINGS DATABASE_URL =", settings.DATABASE_URL)
