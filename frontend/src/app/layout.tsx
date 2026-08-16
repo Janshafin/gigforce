@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import GoogleAuthWrapper from "@/components/GoogleAuthWrapper";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -34,8 +35,11 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans">
         <div className="bg-grain" />
-        {children}
+        <GoogleAuthWrapper>
+          {children}
+        </GoogleAuthWrapper>
       </body>
     </html>
   );
 }
+

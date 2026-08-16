@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import {
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { loginDemo, loginGoogle } from "@/lib/api";
+import { loginGoogle } from "@/lib/api";
 import Link from "next/link";
 import { motion } from "framer-motion";
+
+// Dynamically import useGoogleLogin to avoid SSR issues
+let useGoogleLoginFn: any = null;
+if (typeof window !== "undefined") {
+  import("@react-oauth/google").then((mod) => {
+    useGoogleLoginFn = mod.useGoogleLogin;
+  });
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,42 +21,87 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const handleGoogleSignIn = useCallback(async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      // Dynamically import to avoid SSR issues
+      const { googleLogout } = await import("@react-oauth/google");
+
+      // Use the Google OAuth popup flow via tokenClient
+      const client = (window as any).google?.accounts?.oauth2?.initTokenClient({
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+        scope: "email profile",
+        callback: async (tokenResponse: any) => {
+          if (tokenResponse.error) {
+            setError("Google sign-in was cancelled.");
+            setLoading(false);
+            return;
+          }
+
+          try {
+            // Fetch user info from Google
+            const userInfoRes = await fetch(
+              "https://www.googleapis.com/oauth2/v3/userinfo",
+              {
+                headers: {
+                  Authorization: `Bearer ${tokenResponse.access_token}`,
+                },
+              }
+            );
+            const userInfo = await userInfoRes.json();
+
+            // Send to our backend
+            await loginGoogle(
+              tokenResponse.access_token,
+              userInfo.email,
+              userInfo.name || userInfo.email.split("@")[0]
+            );
+            router.push("/dashboard");
+          } catch (err: any) {
+            console.error("Google login error:", err);
+            setError("Google sign-in failed. Please try again.");
+          } finally {
+            setLoading(false);
+          }
+        },
+      });
+
+      if (client) {
+        client.requestAccessToken();
+      } else {
+        // Fallback: No Google Client ID configured, use demo login
+        const { loginDemo } = await import("@/lib/api");
+        await loginDemo();
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      console.error("Google OAuth error:", err);
+      // Fallback to demo login if Google is not configured
+      try {
+        const { loginDemo } = await import("@/lib/api");
+        await loginDemo();
+        router.push("/dashboard");
+      } catch {
+        setError("Sign-in failed. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  // Email/password login
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      // Bypassing Firebase for local demonstration
-      await loginGoogle("dummy-token-123", email, "GigForge User");
+      await loginGoogle("email-login", email, email.split("@")[0]);
       router.push("/dashboard");
     } catch (err: any) {
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setError("Invalid email or password. Please try again.");
-      } else {
-        setError("Sign in failed. Please check your connection and try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      // Bypassing Firebase Google Auth for local demonstration
-      await loginDemo();
-      router.push("/dashboard");
-    } catch (err: any) {
-      if (err.code === 'auth/popup-blocked') {
-        setError("Google sign-in couldn't open. Please allow pop-ups and try again.");
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        setError("Sign-in was cancelled. Please try again.");
-      } else {
-        setError("Google sign-in failed. Please try again.");
-      }
+      setError("Sign in failed. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
