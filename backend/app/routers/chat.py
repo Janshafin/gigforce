@@ -54,8 +54,9 @@ async def send_chat_message(req: ChatMessageCreate, db: AsyncSession = Depends(g
     action_meta = None
 
     if api_key:
+        print("GEMINI KEY EXISTS:", bool(api_key))
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={api_key}"
             payload = {
                 "contents": [
                     {"role": "user", "parts": [{"text": f"{SYSTEM_PROMPT}\n\nUser request: {req.content}"}]}
@@ -63,6 +64,8 @@ async def send_chat_message(req: ChatMessageCreate, db: AsyncSession = Depends(g
             }
             async with httpx.AsyncClient(timeout=15.0) as client:
                 res = await client.post(url, json=payload)
+                print("GEMINI STATUS:", res.status_code)
+                print("GEMINI BODY:", res.text)
                 if res.status_code == 200:
                     data = res.json()
                     assistant_reply = data["candidates"][0]["content"]["parts"][0]["text"]
