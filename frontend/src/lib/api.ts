@@ -1,5 +1,7 @@
 const getApiBase = () => {
-  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
+  }
   if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
     return `${window.location.protocol}//${window.location.hostname}:8000`;
   }
