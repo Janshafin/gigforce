@@ -1,8 +1,8 @@
 "use client";
 
-import { Send, Bot, User } from "lucide-react";
+import { Send, Bot, User, Mail, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { getChatHistory, sendChatMessage } from "@/lib/api";
+import { getChatHistory, sendChatMessage, draftEmail, sendDraft } from "@/lib/api";
 
 type Message = {
   id?: string;
@@ -10,11 +10,30 @@ type Message = {
   content: string;
 };
 
+type DraftState = {
+  recipientEmail: string;
+  recipientName: string;
+  prompt: string;
+  subject?: string;
+  body?: string;
+  status: 'idle' | 'drafting' | 'review' | 'sending' | 'sent' | 'error';
+  error?: string;
+};
+
 export default function AICoFounderPage() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Email Modal State
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [draftState, setDraftState] = useState<DraftState>({
+    recipientEmail: "",
+    recipientName: "",
+    prompt: "",
+    status: 'idle'
+  });
 
   useEffect(() => {
     fetchHistory();
@@ -52,8 +71,179 @@ export default function AICoFounderPage() {
     }
   };
 
+  const handleDraftEmail = async () => {
+    if (!draftState.recipientEmail || !draftState.recipientName || !draftState.prompt) return;
+    
+    setDraftState(prev => ({ ...prev, status: 'drafting', error: undefined }));
+    try {
+      const res = await draftEmail(draftState.recipientEmail, draftState.recipientName, draftState.prompt);
+      setDraftState(prev => ({
+        ...prev,
+        status: 'review',
+        subject: res.draft.subject,
+        body: res.draft.body
+      }));
+    } catch (e) {
+      setDraftState(prev => ({ ...prev, status: 'error', error: "Failed to draft email. Make sure backend API keys are set." }));
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!draftState.recipientEmail || !draftState.subject || !draftState.body) return;
+    
+    setDraftState(prev => ({ ...prev, status: 'sending', error: undefined }));
+    try {
+      await sendDraft(draftState.recipientEmail, draftState.subject, draftState.body);
+      setDraftState(prev => ({ ...prev, status: 'sent' }));
+      
+      // Auto close after success
+      setTimeout(() => {
+        setIsEmailModalOpen(false);
+        setDraftState({ recipientEmail: "", recipientName: "", prompt: "", status: 'idle' });
+      }, 2000);
+      
+    } catch (e) {
+      setDraftState(prev => ({ ...prev, status: 'error', error: "Failed to send email. Check SMTP settings." }));
+    }
+  };
+
   return (
-    <div className="max-w-4xl mx-auto h-[calc(100vh-80px)] flex flex-col pt-4">
+    <div className="max-w-4xl mx-auto h-[calc(100vh-80px)] flex flex-col pt-4 relative">
+      
+      {/* Email Modal Overlay */}
+      {isEmailModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border-default)] w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-default)]">
+              <h2 className="font-serif text-2xl text-[var(--text-primary)] flex items-center gap-2">
+                <Mail className="w-5 h-5 text-[var(--accent-primary)]" />
+                AI Email Agent
+              </h2>
+              <button 
+                onClick={() => setIsEmailModalOpen(false)}
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto space-y-6">
+              {draftState.error && (
+                <div className="p-4 bg-red-500/10 border border-red-500/50 text-red-500 text-sm">
+                  {draftState.error}
+                </div>
+              )}
+              
+              {draftState.status === 'sent' ? (
+                <div className="text-center py-12 space-y-4">
+                  <div className="w-16 h-16 bg-green-500/10 border border-green-500/50 rounded-full flex items-center justify-center mx-auto">
+                    <Send className="w-8 h-8 text-green-500" />
+                  </div>
+                  <h3 className="font-sans text-xl text-[var(--text-primary)]">Email Sent Successfully!</h3>
+                  <p className="text-[var(--text-secondary)]">Your email to {draftState.recipientEmail} is on its way.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-mono uppercase text-[var(--text-secondary)]">Recipient Email</label>
+                      <input 
+                        type="email" 
+                        value={draftState.recipientEmail}
+                        onChange={e => setDraftState(prev => ({...prev, recipientEmail: e.target.value}))}
+                        disabled={draftState.status !== 'idle'}
+                        className="w-full bg-[var(--bg-secondary)] border border-[var(--border-default)] p-3 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
+                        placeholder="client@example.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-mono uppercase text-[var(--text-secondary)]">Recipient Name</label>
+                      <input 
+                        type="text" 
+                        value={draftState.recipientName}
+                        onChange={e => setDraftState(prev => ({...prev, recipientName: e.target.value}))}
+                        disabled={draftState.status !== 'idle'}
+                        className="w-full bg-[var(--bg-secondary)] border border-[var(--border-default)] p-3 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none"
+                        placeholder="John Doe"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-xs font-mono uppercase text-[var(--text-secondary)]">What should the email say?</label>
+                    <textarea 
+                      value={draftState.prompt}
+                      onChange={e => setDraftState(prev => ({...prev, prompt: e.target.value}))}
+                      disabled={draftState.status !== 'idle'}
+                      className="w-full bg-[var(--bg-secondary)] border border-[var(--border-default)] p-3 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none h-24 resize-none"
+                      placeholder="Follow up on the web design proposal I sent last week..."
+                    />
+                  </div>
+                  
+                  {draftState.status === 'review' && (
+                    <div className="mt-8 border-t border-[var(--border-default)] pt-6 space-y-4">
+                      <h3 className="font-sans font-medium text-[var(--text-primary)] mb-2 flex items-center gap-2">
+                        <Bot className="w-4 h-4 text-[var(--accent-primary)]" />
+                        AI Draft Preview
+                      </h3>
+                      
+                      <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] p-4 space-y-4">
+                        <div>
+                          <span className="text-[var(--text-secondary)] text-sm mr-2">Subject:</span>
+                          <span className="text-[var(--text-primary)] font-medium">{draftState.subject}</span>
+                        </div>
+                        <div className="w-full h-px bg-[var(--border-default)]" />
+                        <div className="text-[var(--text-primary)] whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                          {draftState.body}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            
+            <div className="p-6 border-t border-[var(--border-default)] flex justify-end gap-4 bg-[var(--bg-secondary)]">
+              {draftState.status === 'idle' || draftState.status === 'error' ? (
+                <button 
+                  onClick={handleDraftEmail}
+                  disabled={!draftState.recipientEmail || !draftState.recipientName || !draftState.prompt}
+                  className="bg-[var(--accent-primary)] hover:bg-[#c25e34] text-[var(--bg-primary)] px-6 py-2 font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Bot className="w-4 h-4" />
+                  Generate Draft
+                </button>
+              ) : draftState.status === 'drafting' ? (
+                <button disabled className="bg-[var(--bg-primary)] border border-[var(--accent-primary)] text-[var(--accent-primary)] px-6 py-2 font-medium opacity-75 animate-pulse">
+                  Drafting with AI...
+                </button>
+              ) : draftState.status === 'review' ? (
+                <>
+                  <button 
+                    onClick={() => setDraftState(prev => ({...prev, status: 'idle'}))}
+                    className="px-6 py-2 border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--bg-primary)] transition-colors"
+                  >
+                    Edit Instructions
+                  </button>
+                  <button 
+                    onClick={handleSendEmail}
+                    className="bg-green-600 hover:bg-green-500 text-white px-6 py-2 font-medium transition-colors flex items-center gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    Send Email Now
+                  </button>
+                </>
+              ) : draftState.status === 'sending' ? (
+                <button disabled className="bg-green-600 text-white px-6 py-2 font-medium opacity-75 animate-pulse">
+                  Sending...
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Chat Interface */}
       <div className="flex-1 overflow-y-auto space-y-6 pb-4 no-scrollbar">
         {messages.length === 0 && (
           <div className="flex gap-4">
@@ -100,6 +290,13 @@ export default function AICoFounderPage() {
 
       <div className="bg-[var(--bg-primary)] pt-4 pb-8 mt-auto shrink-0 border-t border-[var(--border-default)]">
         <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-2">
+          <button 
+            onClick={() => setIsEmailModalOpen(true)}
+            className="whitespace-nowrap px-4 py-1.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] hover:bg-[#c25e34] text-xs font-mono uppercase tracking-wide transition-colors flex items-center gap-2"
+          >
+            <Mail className="w-3 h-3" />
+            Draft Email
+          </button>
           {["Find new clients", "Write a proposal", "Review my rates", "Improve profile"].map((action) => (
             <button 
               key={action} 

@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     # Auth
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
     
+    # Email / SMTP
+    SMTP_SERVER: str = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", 587))
+    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    
     class Config:
         env_file = ".env"
         extra = "allow"

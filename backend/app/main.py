@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from app.config import settings
 from app.database import engine, Base
-from app.routers import auth, dashboard, chat, proposals, payments
+from app.routers import auth, dashboard, chat, proposals, payments, email
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,6 +36,7 @@ app.include_router(dashboard.router)
 app.include_router(chat.router)
 app.include_router(proposals.router)
 app.include_router(payments.router)
+app.include_router(email.router)
 
 @app.get("/api/health")
 async def health_check():

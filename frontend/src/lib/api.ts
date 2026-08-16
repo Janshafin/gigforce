@@ -151,3 +151,32 @@ export async function createProposal(data: Partial<Proposal>): Promise<Proposal>
   if (!res.ok) throw new Error("Failed to create proposal");
   return await res.json();
 }
+
+export async function draftEmail(recipientEmail: string, recipientName: string, prompt: string, sendImmediately: boolean = false) {
+  const res = await fetch(`${API_BASE}/api/email/draft`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      recipient_email: recipientEmail,
+      recipient_name: recipientName,
+      prompt: prompt,
+      send_immediately: sendImmediately
+    }),
+  });
+  if (!res.ok) throw new Error("Failed to draft email");
+  return await res.json();
+}
+
+export async function sendDraft(recipientEmail: string, subject: string, body: string) {
+  const res = await fetch(`${API_BASE}/api/email/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      recipient_email: recipientEmail,
+      subject: subject,
+      body: body
+    }),
+  });
+  if (!res.ok) throw new Error("Failed to send email");
+  return await res.json();
+}
