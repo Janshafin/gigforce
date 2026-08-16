@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Zap, Clock, FileText, TrendingUp } from "lucide-react";
 
 export default function Home() {
   return (
@@ -54,6 +54,19 @@ export default function Home() {
         
         {/* 2. HERO */}
         <div className="text-center max-w-4xl mx-auto my-12 sm:my-20 space-y-6">
+          {/* Gemini Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] text-xs font-mono uppercase tracking-widest text-[var(--text-secondary)]"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#D86B3D" />
+            </svg>
+            Powered by Google Gemini
+          </motion.div>
+
           <motion.h1 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -79,8 +92,7 @@ export default function Home() {
           >
             <Link href="/signup" className="inline-block group">
               <div 
-                className="relative inline-flex items-center justify-center bg-[var(--bg-primary)] border border-[var(--accent-primary)] text-[var(--text-primary)] px-8 py-4 font-sans font-medium text-lg transition-colors duration-300 group-hover:bg-[var(--accent-primary)] group-hover:text-[var(--bg-primary)]"
-                style={{ clipPath: "polygon(12px 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0% 50%)" }}
+                className="relative inline-flex items-center justify-center bg-[var(--accent-primary)] text-[var(--bg-primary)] px-8 py-4 font-sans font-medium text-lg transition-all duration-300 group-hover:bg-[#c25e34] group-hover:shadow-lg group-hover:shadow-[var(--accent-primary)]/20"
               >
                 <span>Get Started for Free</span>
                 <ArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
@@ -88,6 +100,40 @@ export default function Home() {
             </Link>
           </motion.div>
         </div>
+
+        {/* 2.5. SOCIAL PROOF / STATS */}
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="w-full my-16 sm:my-24"
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            {[
+              { icon: Clock, value: "15+", label: "Hours Saved Weekly" },
+              { icon: FileText, value: "500+", label: "Proposals Generated" },
+              { icon: TrendingUp, value: "3×", label: "Revenue Growth" },
+              { icon: Zap, value: "< 10s", label: "Proposal Draft Time" },
+            ].map((stat, i) => {
+              const Icon = stat.icon;
+              return (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                  className="bg-[var(--bg-secondary)] border border-[var(--border-default)] p-6 text-center hover:border-[var(--text-secondary)] transition-colors"
+                >
+                  <Icon className="w-5 h-5 text-[var(--accent-primary)] mx-auto mb-3" />
+                  <p className="font-sans text-2xl sm:text-3xl font-semibold text-[var(--text-primary)] mb-1">{stat.value}</p>
+                  <p className="font-mono text-xs text-[var(--text-secondary)] uppercase tracking-wider">{stat.label}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
 
         {/* 3. FEATURES SECTION */}
         <div className="w-full my-24 sm:my-32">
@@ -216,8 +262,7 @@ export default function Home() {
             </h2>
             <Link href="/signup" className="inline-block group">
               <div 
-                className="relative inline-flex items-center justify-center bg-[var(--bg-primary)] border border-[var(--accent-primary)] text-[var(--text-primary)] px-8 py-4 font-sans font-medium text-lg transition-colors duration-300 group-hover:bg-[var(--accent-primary)] group-hover:text-[var(--bg-primary)]"
-                style={{ clipPath: "polygon(12px 0%, calc(100% - 12px) 0%, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0% 50%)" }}
+                className="relative inline-flex items-center justify-center bg-[var(--accent-primary)] text-[var(--bg-primary)] px-8 py-4 font-sans font-medium text-lg transition-all duration-300 group-hover:bg-[#c25e34] group-hover:shadow-lg group-hover:shadow-[var(--accent-primary)]/20"
               >
                 <span>Get Started for Free</span>
                 <ArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
