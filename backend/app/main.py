@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from app.config import settings
 from app.database import engine, Base
-from app.routers import auth, dashboard, chat, proposals
+from app.routers import auth, dashboard, chat, proposals, payments
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,6 +35,7 @@ app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(chat.router)
 app.include_router(proposals.router)
+app.include_router(payments.router)
 
 @app.get("/api/health")
 async def health_check():
@@ -42,5 +43,5 @@ async def health_check():
         "status": "online",
         "app": "GigForge Backend",
         "environment": settings.ENVIRONMENT,
-        "model": "Gemini 1.5 (Google AI Studio API)"
+        "model": "Gemini 3.5 Flash (Google AI Studio API)"
     }

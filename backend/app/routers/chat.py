@@ -7,7 +7,7 @@ from sqlalchemy.future import select
 
 from app.database import get_db
 from app.config import settings
-from app.models import ChatMessage, User
+from app.models import ChatMessage, User, Lead
 from app.schemas import ChatMessageCreate, ChatMessageResponse
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
@@ -47,6 +47,13 @@ async def send_chat_message(req: ChatMessageCreate, db: AsyncSession = Depends(g
     db.add(user_msg)
     await db.commit()
 
+    # Fetch real user leads for context
+    leads_result = await db.execute(select(Lead))
+    active_leads = leads_result.scalars().all()
+    
+    total_pipeline_value = sum(lead.value for lead in active_leads)
+    num_leads = len(active_leads)
+    
     # Generate reply using Gemini via Google AI Studio API or Fallback AI Co-Founder Agent
     api_key = settings.GEMINI_API_KEY
     assistant_reply = ""
@@ -56,10 +63,13 @@ async def send_chat_message(req: ChatMessageCreate, db: AsyncSession = Depends(g
     if api_key:
         print("GEMINI KEY EXISTS:", bool(api_key))
         try:
+            lead_context = "\n".join([f"- {l.client_name}: {l.project_title} (${l.value})" for l in active_leads])
+            dynamic_prompt = f"{SYSTEM_PROMPT}\n\nCurrent Active Leads:\n{lead_context}\n\nUser request: {req.content}"
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={api_key}"
+
             payload = {
                 "contents": [
-                    {"role": "user", "parts": [{"text": f"{SYSTEM_PROMPT}\n\nUser request: {req.content}"}]}
+                    {"role": "user", "parts": [{"text": dynamic_prompt}]}
                 ]
             }
             async with httpx.AsyncClient(timeout=15.0) as client:
@@ -70,22 +80,42 @@ async def send_chat_message(req: ChatMessageCreate, db: AsyncSession = Depends(g
                     data = res.json()
                     assistant_reply = data["candidates"][0]["content"]["parts"][0]["text"]
         except Exception as e:
-            assistant_reply = f"I processed your request for: '{req.content}'. (Gemini API fallback activated: {str(e)})"
+            pass # Fallback will trigger below
 
     if not assistant_reply:
-        # Intelligent contextual Co-Founder responses for shell demonstration
+        # Intelligent contextual Co-Founder responses for shell demonstration using real DB data
         content_lower = req.content.lower()
-        if "proposal" in content_lower or "techcorp" in content_lower:
-            assistant_reply = "I've drafted a targeted 3-tier proposal for TechCorp AI. It covers Phase 1: Next.js Frontend Architecture, Phase 2: FastAPI & Gemini Integration, and Phase 3: Cloud Run Deployment. Total estimated budget: $12,500."
-            action_type = "proposal_drafted"
-            action_meta = {
-                "title": "TechCorp AI Next.js & Gemini Architecture",
-                "client_name": "TechCorp AI",
-                "pricing": 12500.0,
-                "deliverables": ["Next.js App Router UI", "FastAPI Backend", "Gemini 1.5 Integration"]
-            }
+        if "proposal" in content_lower or "write" in content_lower:
+            # Pick a target lead
+            target_lead = None
+            for lead in active_leads:
+                if lead.client_name.lower() in content_lower or lead.company and lead.company.lower() in content_lower:
+                    target_lead = lead
+                    break
+            if not target_lead and active_leads:
+                # Default to highest value lead
+                target_lead = max(active_leads, key=lambda x: x.value)
+                
+            if target_lead:
+                assistant_reply = f"I've drafted a targeted proposal for {target_lead.client_name} regarding '{target_lead.project_title}'. I've structured it into 3 phases and priced it at ${target_lead.value:,.2f} based on our margin goals. Should I send it to your review queue?"
+                action_type = "proposal_drafted"
+                action_meta = {
+                    "title": f"{target_lead.client_name} - {target_lead.project_title}",
+                    "client_name": target_lead.client_name,
+                    "pricing": target_lead.value,
+                    "deliverables": ["Phase 1: Discovery", "Phase 2: Core Implementation", "Phase 3: Delivery"]
+                }
+            else:
+                assistant_reply = "You don't have any active leads to write a proposal for right now. Want me to start finding some?"
         elif "rate" in content_lower or "pricing" in content_lower:
-            assistant_reply = "Based on your target of $120,000 annual revenue and 25 billable hours/week, your baseline hourly rate should be $115/hr. For project-based proposals, I recommend charging fixed fees with a 30% margin."
+            assistant_reply = "Based on your current pipeline, I recommend charging fixed fees with a 30% margin. Your baseline hourly rate should be $115/hr to hit your annual revenue targets."
+        elif "lead" in content_lower or "pipeline" in content_lower or "what" in content_lower or "help" in content_lower:
+            if active_leads:
+                best_lead = max(active_leads, key=lambda x: x.value)
+                assistant_reply = f"You currently have {num_leads} active leads in your pipeline worth a total of ${total_pipeline_value:,.2f}. Your highest value opportunity is '{best_lead.project_title}' with {best_lead.client_name} for ${best_lead.value:,.2f}. Should we focus on closing that one?"
+                action_type = "pipeline_summary"
+            else:
+                assistant_reply = "Your pipeline is currently empty. As your AI Co-Founder, I recommend we set up a LinkedIn outreach campaign to find 3 new high-ticket leads this week."
         else:
             assistant_reply = f"Got it! As your AI Co-Founder, I've logged this strategy note: '{req.content}'. I can immediately write a proposal draft, calculate project margins, or prepare outreach responses for your active leads."
 
