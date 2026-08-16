@@ -1,9 +1,9 @@
 const getApiBase = () => {
-  if (process.env.NEXT_PUBLIC_API_URL) {
+  if (process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_API_URL !== "https://your-new-render-url-here.onrender.com") {
     return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
   }
   if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
-    return `${window.location.protocol}//${window.location.hostname}:8000`;
+    return "https://gigforce.onrender.com";
   }
   return "http://localhost:8000";
 };
