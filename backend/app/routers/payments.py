@@ -15,6 +15,9 @@ class CheckoutRequest(BaseModel):
 
 @router.post("/create-checkout-session")
 async def create_checkout_session(request: CheckoutRequest):
+    if request.plan == "starter":
+        return {"checkout_url": "http://localhost:3000/dashboard?payment=success"}
+
     if request.plan == "pro":
         price_id = settings.STRIPE_PRO_PRICE_ID
     elif request.plan == "elite":
@@ -23,34 +26,18 @@ async def create_checkout_session(request: CheckoutRequest):
         raise HTTPException(status_code=400, detail="Invalid plan")
 
     if not settings.STRIPE_SECRET_KEY:
-        raise HTTPException(
-            status_code=500,
-            detail="Stripe secret key is not configured"
-        )
+        raise HTTPException(status_code=500, detail="Stripe secret key is not configured")
 
     if not price_id:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Stripe price ID is not configured for {request.plan}"
-        )
+        raise HTTPException(status_code=500, detail=f"Stripe price ID is not configured for {request.plan}")
 
     try:
         checkout_session = stripe.checkout.Session.create(
             mode="subscription",
-            line_items=[
-                {
-                    "price": price_id,
-                    "quantity": 1,
-                }
-            ],
+            line_items=[{"price": price_id, "quantity": 1}],
             success_url="http://localhost:3000/dashboard?payment=success",
             cancel_url="http://localhost:3000/dashboard?payment=cancelled",
         )
-
         return {"checkout_url": checkout_session.url}
-
     except stripe.StripeError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=400, detail=str(e))
