@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginGoogle } from "@/lib/api";
+import { loginGoogle, loginDemo } from "@/lib/api";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -13,81 +13,29 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleGoogleSignUp = useCallback(async () => {
-    setError("");
+  const handleGoogleSignUp = async () => {
     setLoading(true);
-
+    setError("");
     try {
-      const client = (window as any).google?.accounts?.oauth2?.initTokenClient({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
-        scope: "email profile",
-        callback: async (tokenResponse: any) => {
-          if (tokenResponse.error) {
-            setError("Google sign-up was cancelled.");
-            setLoading(false);
-            return;
-          }
-
-          try {
-            // Fetch user info from Google
-            const userInfoRes = await fetch(
-              "https://www.googleapis.com/oauth2/v3/userinfo",
-              {
-                headers: {
-                  Authorization: `Bearer ${tokenResponse.access_token}`,
-                },
-              }
-            );
-            const userInfo = await userInfoRes.json();
-
-            // Send to our backend (auto-creates user)
-            await loginGoogle(
-              tokenResponse.access_token,
-              userInfo.email,
-              userInfo.name || userInfo.email.split("@")[0]
-            );
-            router.push("/dashboard");
-          } catch (err: any) {
-            console.error("Google signup error:", err);
-            setError("Google sign-up failed. Please try again.");
-          } finally {
-            setLoading(false);
-          }
-        },
-      });
-
-      if (client) {
-        client.requestAccessToken();
-      } else {
-        // Fallback: No Google Client ID configured, use demo login
-        const { loginDemo } = await import("@/lib/api");
-        await loginDemo();
-        router.push("/dashboard");
-      }
+      await loginDemo();
+      router.push("/dashboard");
     } catch (err: any) {
-      console.error("Google OAuth error:", err);
-      try {
-        const { loginDemo } = await import("@/lib/api");
-        await loginDemo();
-        router.push("/dashboard");
-      } catch {
-        setError("Sign-up failed. Please try again.");
-      }
+      console.error("Signup error:", err);
+      setError("Sign-up failed. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  };
 
-  // Email/password signup
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     try {
       await loginGoogle("email-signup", email, email.split("@")[0]);
       router.push("/dashboard");
     } catch (err: any) {
+      console.error("Email signup error:", err);
       setError("Account creation failed. Please check your connection and try again.");
     } finally {
       setLoading(false);
