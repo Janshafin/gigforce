@@ -33,31 +33,53 @@ def draft_email_with_llm(prompt: str, recipient_name: str, context: str = "") ->
         
     model = genai.GenerativeModel('gemini-3.5-flash')
     
-    system_instruction = f"""
-    You are an email writing assistant. Your ONLY job is to write exactly what the user asks you to write.
-    
-    RULES:
-    - The recipient's name is "{recipient_name}". You MUST address them by this name (e.g., "Hi {recipient_name},").
-    - Follow the user's instructions EXACTLY. If they say "tell them it's a test mail", just write a short friendly email saying it's a test mail. Do NOT add extra content they didn't ask for.
-    - Keep it natural and human. Don't over-embellish or add unnecessary formality unless the user asks for it.
-    - Sign off as "GigForge Team" unless told otherwise.
-    {f'Additional Context: {context}' if context else ''}
-    
-    You must output EXACTLY in this format:
-    SUBJECT: [Your generated subject line]
-    BODY:
-    [Your generated email body]
-    """
+    system_instruction = f"""You are an email writing assistant. Write exactly what the user asks.
+
+RULES:
+- The recipient's name is "{recipient_name}". Address them by this name.
+- Follow the user's instructions EXACTLY. Do NOT add extra content.
+- Keep it natural and human.
+- Sign off as "GigForge Team" unless told otherwise.
+{f'Additional Context: {context}' if context else ''}
+
+CRITICAL OUTPUT FORMAT - follow this EXACTLY:
+Line 1: The subject line text only (no prefix, no "Subject:", no quotes)
+Line 2: ---
+Line 3 onwards: The email body text only (no prefix, no "Body:")
+
+Example output:
+Meeting Follow-up for Project Discussion
+---
+Hi John,
+
+I wanted to follow up on our meeting last week.
+
+Best regards,
+GigForge Team"""
     
     print(f"[*] Drafting email using Gemini LLM for {recipient_name}...")
     try:
         response = model.generate_content(f"{system_instruction}\n\nUser's instruction: {prompt}")
         text = response.text.strip()
         
-        # Parse the output
-        parts = text.split("BODY:")
-        subject_part = parts[0].replace("SUBJECT:", "").strip()
-        body_part = parts[1].strip() if len(parts) > 1 else text
+        # Remove any markdown formatting
+        text = text.replace("**", "").replace("```", "").strip()
+        
+        # Parse using --- separator
+        if "---" in text:
+            parts = text.split("---", 1)
+            subject_part = parts[0].strip()
+            body_part = parts[1].strip() if len(parts) > 1 else ""
+        elif "SUBJECT:" in text.upper() and "BODY:" in text.upper():
+            import re
+            subject_match = re.search(r'SUBJECT:\s*(.*?)(?:\n|BODY:)', text, re.IGNORECASE | re.DOTALL)
+            body_match = re.search(r'BODY:\s*(.*)', text, re.IGNORECASE | re.DOTALL)
+            subject_part = subject_match.group(1).strip() if subject_match else prompt[:50]
+            body_part = body_match.group(1).strip() if body_match else text
+        else:
+            lines = text.strip().split("\n", 1)
+            subject_part = lines[0].strip()
+            body_part = lines[1].strip() if len(lines) > 1 else text
         
         return {
             "subject": subject_part,

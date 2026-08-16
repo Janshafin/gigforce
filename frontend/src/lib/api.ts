@@ -159,7 +159,14 @@ export async function createProposal(data: Partial<Proposal>): Promise<Proposal>
   return await res.json();
 }
 
-export async function draftEmail(recipientEmail: string, recipientName: string, prompt: string, sendImmediately: boolean = false) {
+export async function draftEmail(
+  recipientEmail: string,
+  recipientName: string,
+  prompt: string,
+  sendImmediately: boolean = false,
+  senderEmail?: string,
+  senderPassword?: string
+) {
   const res = await fetch(`${API_BASE}/api/email/draft`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -167,23 +174,39 @@ export async function draftEmail(recipientEmail: string, recipientName: string, 
       recipient_email: recipientEmail,
       recipient_name: recipientName,
       prompt: prompt,
-      send_immediately: sendImmediately
+      send_immediately: sendImmediately,
+      sender_email: senderEmail || undefined,
+      sender_password: senderPassword || undefined,
     }),
   });
-  if (!res.ok) throw new Error("Failed to draft email");
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to draft email");
+  }
   return await res.json();
 }
 
-export async function sendDraft(recipientEmail: string, subject: string, body: string) {
+export async function sendDraft(
+  recipientEmail: string,
+  subject: string,
+  body: string,
+  senderEmail?: string,
+  senderPassword?: string
+) {
   const res = await fetch(`${API_BASE}/api/email/send`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       recipient_email: recipientEmail,
       subject: subject,
-      body: body
+      body: body,
+      sender_email: senderEmail || undefined,
+      sender_password: senderPassword || undefined,
     }),
   });
-  if (!res.ok) throw new Error("Failed to send email");
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to send email");
+  }
   return await res.json();
 }

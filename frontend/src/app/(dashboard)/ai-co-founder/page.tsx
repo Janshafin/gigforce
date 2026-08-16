@@ -16,6 +16,8 @@ type DraftState = {
   prompt: string;
   subject?: string;
   body?: string;
+  senderEmail: string;
+  senderPassword: string;
   status: 'idle' | 'drafting' | 'review' | 'sending' | 'sent' | 'error';
   error?: string;
 };
@@ -32,6 +34,8 @@ export default function AICoFounderPage() {
     recipientEmail: "",
     recipientName: "",
     prompt: "",
+    senderEmail: "",
+    senderPassword: "",
     status: 'idle'
   });
 
@@ -76,15 +80,22 @@ export default function AICoFounderPage() {
     
     setDraftState(prev => ({ ...prev, status: 'drafting', error: undefined }));
     try {
-      const res = await draftEmail(draftState.recipientEmail, draftState.recipientName, draftState.prompt);
+      const res = await draftEmail(
+        draftState.recipientEmail,
+        draftState.recipientName,
+        draftState.prompt,
+        false,
+        draftState.senderEmail || undefined,
+        draftState.senderPassword || undefined
+      );
       setDraftState(prev => ({
         ...prev,
         status: 'review',
         subject: res.draft.subject,
         body: res.draft.body
       }));
-    } catch (e) {
-      setDraftState(prev => ({ ...prev, status: 'error', error: "Failed to draft email. Make sure backend API keys are set." }));
+    } catch (e: any) {
+      setDraftState(prev => ({ ...prev, status: 'error', error: e.message || "Failed to draft email." }));
     }
   };
 
@@ -93,19 +104,26 @@ export default function AICoFounderPage() {
     
     setDraftState(prev => ({ ...prev, status: 'sending', error: undefined }));
     try {
-      await sendDraft(draftState.recipientEmail, draftState.subject, draftState.body);
+      await sendDraft(
+        draftState.recipientEmail,
+        draftState.subject,
+        draftState.body,
+        draftState.senderEmail || undefined,
+        draftState.senderPassword || undefined
+      );
       setDraftState(prev => ({ ...prev, status: 'sent' }));
       
       // Auto close after success
       setTimeout(() => {
         setIsEmailModalOpen(false);
-        setDraftState({ recipientEmail: "", recipientName: "", prompt: "", status: 'idle' });
+        setDraftState({ recipientEmail: "", recipientName: "", prompt: "", senderEmail: "", senderPassword: "", status: 'idle' });
       }, 2000);
       
-    } catch (e) {
-      setDraftState(prev => ({ ...prev, status: 'error', error: "Failed to send email. Check SMTP settings." }));
+    } catch (e: any) {
+      setDraftState(prev => ({ ...prev, status: 'error', error: e.message || "Failed to send email." }));
     }
   };
+
 
   return (
     <div className="max-w-4xl mx-auto h-[calc(100vh-80px)] flex flex-col pt-4 relative">
@@ -144,6 +162,37 @@ export default function AICoFounderPage() {
                 </div>
               ) : (
                 <>
+                  {/* Sender Credentials */}
+                  <div className="p-4 bg-[var(--bg-secondary)] border border-[var(--border-default)] space-y-3">
+                    <p className="text-xs font-mono uppercase text-[var(--accent-primary)] tracking-wide">Send from your Gmail</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Enter your Gmail and App Password so the email comes from your account. <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="text-[var(--accent-primary)] underline">Get App Password →</a></p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-mono uppercase text-[var(--text-secondary)]">Your Gmail</label>
+                        <input 
+                          type="email" 
+                          value={draftState.senderEmail}
+                          onChange={e => setDraftState(prev => ({...prev, senderEmail: e.target.value}))}
+                          disabled={draftState.status !== 'idle'}
+                          className="w-full bg-[var(--bg-primary)] border border-[var(--border-default)] p-3 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none text-sm"
+                          placeholder="you@gmail.com"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-mono uppercase text-[var(--text-secondary)]">App Password</label>
+                        <input 
+                          type="password" 
+                          value={draftState.senderPassword}
+                          onChange={e => setDraftState(prev => ({...prev, senderPassword: e.target.value}))}
+                          disabled={draftState.status !== 'idle'}
+                          className="w-full bg-[var(--bg-primary)] border border-[var(--border-default)] p-3 text-[var(--text-primary)] focus:border-[var(--accent-primary)] outline-none text-sm"
+                          placeholder="xxxx xxxx xxxx xxxx"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recipient Info */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-xs font-mono uppercase text-[var(--text-secondary)]">Recipient Email</label>
