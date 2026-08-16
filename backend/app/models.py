@@ -14,7 +14,8 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     full_name = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
-    provider = Column(String, default="google") # google or magic_link
+    hashed_password = Column(String, nullable=True)  # For email/password auth
+    provider = Column(String, default="email") # email, google, magic_link, demo
     gemini_api_key = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

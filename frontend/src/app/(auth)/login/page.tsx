@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginGoogle, loginDemo } from "@/lib/api";
+import { login, loginDemo } from "@/lib/api";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -13,30 +13,32 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleGoogleSignIn = async () => {
+  // Quick demo sign-in (no account needed)
+  const handleDemoSignIn = async () => {
     setLoading(true);
     setError("");
     try {
       await loginDemo();
       router.push("/dashboard");
     } catch (err: any) {
-      console.error("Login error:", err);
-      setError("Sign-in failed. Please try again.");
+      console.error("Demo login error:", err);
+      setError("Demo sign-in failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
+  // Real email/password login
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
-      await loginGoogle("email-login", email, email.split("@")[0]);
+      await login(email, password);
       router.push("/dashboard");
     } catch (err: any) {
-      console.error("Email login error:", err);
-      setError("Sign in failed. Please check your connection and try again.");
+      console.error("Login error:", err);
+      setError(err.message || "Sign in failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -79,27 +81,27 @@ export default function LoginPage() {
             </div>
           )}
 
+          {/* Quick Demo Access */}
           <button
-            onClick={handleGoogleSignIn}
+            onClick={handleDemoSignIn}
             disabled={loading}
             className="w-full py-3 px-4 border border-[var(--border-default)] hover:border-[var(--text-secondary)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-sm font-medium flex items-center justify-center gap-3 transition-colors mb-8 disabled:opacity-50"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.2 9 5 12 5z" />
-              <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z" />
-              <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 10.8 0 12s.7 2.3 1.9 4.7l3.7-1.9z" />
-              <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.2-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z" />
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+              <polyline points="10 17 15 12 10 7" />
+              <line x1="15" y1="12" x2="3" y2="12" />
             </svg>
-            Continue with Google
+            Try Demo (No Account Needed)
           </button>
 
           <div className="flex items-center my-6">
             <div className="flex-1 border-t border-[var(--border-default)]"></div>
-            <span className="px-4 text-xs font-mono text-[var(--text-secondary)] uppercase tracking-widest">or continue with email</span>
+            <span className="px-4 text-xs font-mono text-[var(--text-secondary)] uppercase tracking-widest">or sign in with email</span>
             <div className="flex-1 border-t border-[var(--border-default)]"></div>
           </div>
 
-          <form onSubmit={handleEmailAuth} className="space-y-5">
+          <form onSubmit={handleEmailLogin} className="space-y-5">
             <div>
               <label className="block text-xs font-mono text-[var(--text-secondary)] mb-2 uppercase tracking-wide">
                 Email
@@ -109,7 +111,8 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-default)] focus:border-[var(--accent-primary)] px-4 py-3 text-[var(--text-primary)] text-base outline-none transition-colors"
+                placeholder="you@example.com"
+                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-default)] focus:border-[var(--accent-primary)] px-4 py-3 text-[var(--text-primary)] text-base outline-none transition-colors placeholder:text-[var(--text-secondary)]/40"
               />
             </div>
             
@@ -122,7 +125,8 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-default)] focus:border-[var(--accent-primary)] px-4 py-3 text-[var(--text-primary)] text-base outline-none transition-colors"
+                placeholder="••••••••"
+                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-default)] focus:border-[var(--accent-primary)] px-4 py-3 text-[var(--text-primary)] text-base outline-none transition-colors placeholder:text-[var(--text-secondary)]/40"
               />
             </div>
 
@@ -136,9 +140,6 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-8 flex flex-col items-center gap-4 text-sm font-sans">
-            <button className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
-              Forgot password?
-            </button>
             <div className="text-[var(--text-secondary)]">
               New to GigForge?{" "}
               <Link href="/signup" className="text-[var(--accent-primary)] hover:underline">

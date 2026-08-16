@@ -68,6 +68,48 @@ export async function fetchHealth() {
   }
 }
 
+// ─── Real Email/Password Auth ─────────────────────────────────────────
+export async function signup(email: string, password: string, fullName?: string) {
+  const res = await fetch(`${API_BASE}/api/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, full_name: fullName }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Signup failed");
+  }
+
+  const data = await res.json();
+  if (typeof window !== "undefined") {
+    localStorage.setItem("gigforge_token", data.access_token);
+    localStorage.setItem("gigforge_user", JSON.stringify(data.user));
+  }
+  return data;
+}
+
+export async function login(email: string, password: string) {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Login failed");
+  }
+
+  const data = await res.json();
+  if (typeof window !== "undefined") {
+    localStorage.setItem("gigforge_token", data.access_token);
+    localStorage.setItem("gigforge_user", JSON.stringify(data.user));
+  }
+  return data;
+}
+
+// ─── Demo Login ───────────────────────────────────────────────────────
 export async function loginDemo() {
   const res = await fetch(`${API_BASE}/api/auth/demo`, { method: "POST" });
   if (!res.ok) throw new Error("Demo login failed");

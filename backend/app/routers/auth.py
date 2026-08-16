@@ -4,16 +4,24 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from jose import jwt, JWTError
+from passlib.hash import sha256_crypt
 
 from app.database import get_db
 from app.config import settings
 from app.models import User, MagicToken
 from app.schemas import (
     MagicLinkRequest, MagicLinkVerify, GoogleAuthRequest, 
-    TokenResponse, UserResponse
+    TokenResponse, UserResponse, SignupRequest, LoginRequest
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+# Password hashing
+def hash_password(password: str) -> str:
+    return sha256_crypt.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return sha256_crypt.verify(plain_password, hashed_password)
 
 def create_access_token(user_id: str, email: str) -> str:
     expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -22,12 +30,69 @@ def create_access_token(user_id: str, email: str) -> str:
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
+# ─── Real Email/Password Signup ───────────────────────────────────────
+@router.post("/signup", response_model=TokenResponse)
+async def signup(req: SignupRequest, db: AsyncSession = Depends(get_db)):
+    """Create a new account with email and password."""
+    # Check if user already exists
+    result = await db.execute(select(User).where(User.email == req.email))
+    existing_user = result.scalars().first()
+    
+    if existing_user:
+        raise HTTPException(
+            status_code=400, 
+            detail="An account with this email already exists. Please sign in instead."
+        )
+    
+    # Create new user with hashed password
+    user = User(
+        email=req.email,
+        full_name=req.full_name or req.email.split("@")[0].capitalize(),
+        hashed_password=hash_password(req.password),
+        provider="email",
+        avatar_url=f"https://ui-avatars.com/api/?name={req.email.split('@')[0]}&background=D4714C&color=fff&size=150"
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    token = create_access_token(user.id, user.email)
+    return TokenResponse(access_token=token, user=UserResponse.model_validate(user))
+
+# ─── Real Email/Password Login ────────────────────────────────────────
+@router.post("/login", response_model=TokenResponse)
+async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
+    """Sign in with email and password."""
+    result = await db.execute(select(User).where(User.email == req.email))
+    user = result.scalars().first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=401, 
+            detail="No account found with this email. Please sign up first."
+        )
+    
+    if not user.hashed_password:
+        raise HTTPException(
+            status_code=401, 
+            detail="This account was created with Google/Demo login. Please use that method to sign in."
+        )
+    
+    if not verify_password(req.password, user.hashed_password):
+        raise HTTPException(
+            status_code=401, 
+            detail="Incorrect password. Please try again."
+        )
+
+    token = create_access_token(user.id, user.email)
+    return TokenResponse(access_token=token, user=UserResponse.model_validate(user))
+
+# ─── Google / Social Login (for future use) ────────────────────────────
 @router.post("/google", response_model=TokenResponse)
 async def google_login(req: GoogleAuthRequest, db: AsyncSession = Depends(get_db)):
-    # In production, verify id_token with google-auth library
     email = req.email or "user@gigforge.ai"
     full_name = req.full_name or "Alex Vance (Freelancer)"
-    avatar_url = req.avatar_url or "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+    avatar_url = req.avatar_url or f"https://ui-avatars.com/api/?name={email.split('@')[0]}&background=D4714C&color=fff&size=150"
     
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalars().first()
@@ -46,6 +111,7 @@ async def google_login(req: GoogleAuthRequest, db: AsyncSession = Depends(get_db
     token = create_access_token(user.id, user.email)
     return TokenResponse(access_token=token, user=UserResponse.model_validate(user))
 
+# ─── Magic Link ─────────────────────────────────────────────────────────
 @router.post("/magic-link")
 async def request_magic_link(req: MagicLinkRequest, db: AsyncSession = Depends(get_db)):
     raw_token = secrets.token_urlsafe(32)
@@ -59,7 +125,6 @@ async def request_magic_link(req: MagicLinkRequest, db: AsyncSession = Depends(g
     db.add(magic_token)
     await db.commit()
     
-    # Return magic token in response for easy testing/demo
     magic_url = f"http://localhost:3000/login/verify?token={raw_token}"
     return {
         "message": f"Magic link generated for {req.email}",
@@ -89,7 +154,7 @@ async def verify_magic_link(req: MagicLinkVerify, db: AsyncSession = Depends(get
         user = User(
             email=token_record.email,
             full_name=f"{name_parts} (Freelancer)",
-            avatar_url="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+            avatar_url=f"https://ui-avatars.com/api/?name={name_parts}&background=D4714C&color=fff&size=150",
             provider="magic_link"
         )
         db.add(user)
@@ -101,6 +166,7 @@ async def verify_magic_link(req: MagicLinkVerify, db: AsyncSession = Depends(get
     token = create_access_token(user.id, user.email)
     return TokenResponse(access_token=token, user=UserResponse.model_validate(user))
 
+# ─── Demo Login ──────────────────────────────────────────────────────────
 @router.post("/demo", response_model=TokenResponse)
 async def demo_login(db: AsyncSession = Depends(get_db)):
     email = "demo@gigforge.ai"

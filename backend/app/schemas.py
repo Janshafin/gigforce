@@ -35,6 +35,15 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     user: UserResponse
 
+class SignupRequest(BaseModel):
+    email: EmailStr
+    password: str
+    full_name: Optional[str] = None
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
 class LeadBase(BaseModel):
     client_name: str
     company: Optional[str] = None
