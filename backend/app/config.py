@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     SMTP_SERVER: str = os.getenv("SMTP_SERVER", "smtp.gmail.com")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
     SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
-SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     # Stripe
     STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY", "")
     STRIPE_PRO_PRICE_ID: str = os.getenv("STRIPE_PRO_PRICE_ID", "")
